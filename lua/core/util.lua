@@ -316,6 +316,11 @@ function table:slice(begin, _end)
   return ret
 end
 
+--- 将一个`table`中的值复制到调用函数的`table`里。
+---@generic T, U
+---@param self table<T, U> @ 调用函数的`table`
+---@param targetTbl table<T, U> @ 被复制的源`table`
+---@return void
 function table:assign(targetTbl)
   for key, value in pairs(targetTbl) do
     if self[key] then
