@@ -1,6 +1,7 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 
 local Util = {}
+
 Util.DummyFunc = function() end
 Util.DummyTable = setmetatable({}, {
   __newindex = function() error("Cannot assign to dummy table") end
@@ -12,6 +13,7 @@ local metamethods = {
   "__concat", "__len", "__eq", "__lt", "__le", "__call",
   -- "__index", "__newindex",
 }
+
 -- 别对类用 暂且会弄坏isSubclassOf 懒得研究先
 Util.lockTable = function(t)
   local mt = getmetatable(t) or Util.DummyTable
@@ -39,14 +41,22 @@ function fk.qlist(list)
   return qlist_iterator, list, -1
 end
 
----@param func fun(element, index, array)
+--- 对数组的每个元素执行一次给定的函数。
+---@generic T
+---@param self T[] @ 调用函数的数组，同时也是函数`func`中的第三个参数
+---@param func fun(element: T, index: integer, array: T[]): void @ 为数组中每个元素执行的函数
+---@return void
 function table:forEach(func)
   for i, v in ipairs(self) do
     func(v, i, self)
   end
 end
 
----@param func fun(element, index, array)
+--- 测试一个数组内的所有元素是否都能通过指定函数的测试。
+---@generic T
+---@param self T[] @ 调用函数的数组，同时也是函数`func`中的第三个参数
+---@param func fun(element: T, index: integer, array: T[]): boolean @ 为数组中的每个元素执行的函数
+---@return boolean @ 如果测试函数为每个数组元素返回`true`，则为`true`，反之为`false`
 function table:every(func)
   for i, v in ipairs(self) do
     if not func(v, i, self) then
@@ -56,7 +66,11 @@ function table:every(func)
   return true
 end
 
----@param func fun(element, index, array)
+--- 返回数组中满足提供的测试函数的第一个元素的值。
+---@generic T
+---@param self T[] @ 调用函数的数组，同时也是函数`func`中的第三个参数
+---@param func fun(element: T, index: integer, array: T[]): boolean @ 为数组中的每个元素执行的函数
+---@return T @ 数组中第一个满足所提供测试函数的元素的值，均不满足则返回`nil`
 function table:find(func)
   for i, v in ipairs(self) do
     if func(v, i, self) then
@@ -66,10 +80,11 @@ function table:find(func)
   return nil
 end
 
+--- 创建给定数组一部分的浅拷贝，其包含通过所提供函数实现的测试的所有元素。
 ---@generic T
----@param self T[]
----@param func fun(element, index, array)
----@return T[]
+---@param self T[] @ 调用函数的数组，同时也是函数`func`中的第三个参数
+---@param func fun(element: T, index: integer, array: T[]): boolean @ 为数组中的每个元素执行的函数
+---@return T[] @ 满足测试函数的元素所组成的数组，均不满足则返回空数组
 function table.filter(self, func)
   local ret = {}
   for i, v in ipairs(self) do
@@ -80,7 +95,11 @@ function table.filter(self, func)
   return ret
 end
 
----@param func fun(element, index, array)
+--- 创建一个新数组，这个新数组由原数组中的每个元素都调用一次提供的函数后的返回值组成。
+---@generic T
+---@param self T[] @ 调用函数的数组，同时也是函数`func`中的第三个参数
+---@param func fun(element: T, index: integer, array: T[]): T @ 为数组中的每个元素执行的函数
+---@return T[] @ 一个新数组，每个元素都是回调函数的返回值
 function table:map(func)
   local ret = {}
   for i, v in ipairs(self) do
@@ -99,9 +118,10 @@ Util.NameMapper = function(e) return e.name end
 Util.Name2GeneralMapper = function(e) return Fk.generals[e] end
 Util.Name2SkillMapper = function(e) return Fk.skills[e] end
 
+--- 返回一个元素顺序相反的新数组。
 ---@generic T
----@param self T[]
----@return T[]
+---@param self T[] @ 调用函数的数组
+---@return T[] @ 调用函数的数组经过反序处理后的数组
 function table.reverse(self)
   local ret = {}
   for _, e in ipairs(self) do
@@ -110,6 +130,11 @@ function table.reverse(self)
   return ret
 end
 
+--- 判断数组是否包含一个指定的值。
+---@generic T
+---@param self T[] @ 调用函数的数组
+---@param element T @ 需要查找的值
+---@return boolean @ 如果数组中包含给定的值，则返回`true`，反之返回`false`
 function table:contains(element)
   if #self == 0 then return false end
   for _, e in ipairs(self) do
@@ -117,6 +142,10 @@ function table:contains(element)
   end
 end
 
+--- 打乱数组的元素；这会改变原数组的排序方法。
+---@generic T
+---@param self T[] @ 调用函数的数组
+---@return void
 function table:shuffle()
   for i = #self, 2, -1 do
       local j = math.random(i)
@@ -124,12 +153,23 @@ function table:shuffle()
   end
 end
 
+--- 添加一个元素中的所有元素。
+---@generic T
+---@param self T[] @ 调用函数的数组
+---@param list T[] @ 需要添加的元素的数组
+---@return void
 function table:insertTable(list)
   for _, e in ipairs(list) do
     table.insert(self, e)
   end
 end
 
+--- 返回数组中第一次出现给定元素的下标，如果不存在则返回`-1`。
+---@generic T
+---@param self T[] @ 调用函数的数组
+---@param value T @ 数组中要查找的元素。
+---@param from integer @ 开始搜索的索引（默认为`1`）
+---@return integer
 function table:indexOf(value, from)
   from = from or 1
   for i = from, #self do
@@ -138,6 +178,11 @@ function table:indexOf(value, from)
   return -1
 end
 
+--- 删除数组中第一次出现的给定元素；若成功删除则返回`true`，反之返回`false`。
+---@generic T
+---@param self T[] @ 调用函数的数组
+---@param value T @ 数组中要删除的元素。
+---@return boolean @ 是否进行了删除操作
 function table:removeOne(element)
   if #self == 0 or type(self[1]) ~= type(element) then return false end
 
@@ -152,9 +197,12 @@ end
 
 -- Note: only clone key and value, no metatable
 -- so dont use for class or instance
----@generic T
----@param self T
----@return T
+--- 深拷贝一个给定的`table`。
+---
+--- > 注意: 该方法不拷贝元数据，故不要用于类和实例。
+---@generic T, U
+---@param self table<T, U> @ 调用函数的`table`
+---@return table<T, U> @ 经过深拷贝的`table`
 function table.clone(self)
   local ret = {}
   for k, v in pairs(self) do
@@ -168,6 +216,10 @@ function table.clone(self)
 end
 
 -- similar to table.clone but not recursively
+--- 浅拷贝一个给定的`table`。
+---@generic T, U
+---@param self table<T, U> @ 调用函数的`table`
+---@return table<T, U> @ 经过浅拷贝的`table`
 function table.simpleClone(self)
   local ret = {}
   for k, v in pairs(self) do
@@ -177,6 +229,10 @@ function table.simpleClone(self)
 end
 
 -- similar to table.clone but not clone class/instances
+--- 深拷贝一个给定的`table`，在复制过程中过滤掉其中的类和实例。
+---@generic T, U
+---@param self table<T, U> @ 调用函数的`table`
+---@return table<T, U> @ 经过深拷贝的`table`
 function table.cloneWithoutClass(self)
   local ret = {}
   for k, v in pairs(self) do
@@ -194,16 +250,22 @@ function table.cloneWithoutClass(self)
 end
 
 -- if table does not contain the element, we insert it
+--- 将指定的元素添加到数组的末尾，但不会添加已经存在的元素。
+---@generic T
+---@param self T[] @ 调用函数的数组
+---@param element T @ 添加到数组末尾的元素
+---@return void
 function table:insertIfNeed(element)
   if not table.contains(self, element) then
     table.insert(self, element)
   end
 end
 
+--- 返回数组中随机的一个或指定个元素
 ---@generic T
----@param self T[]
----@param n integer
----@return T|T[]
+---@param self T[] @ 调用函数的数组
+---@param n integer @ 需要元素的个数
+---@return T|T[] @ 当不给定个数时，返回随机的元素；当给定个数时，无论个数是否为1，都会返回随机元素的数组
 function table:random(n)
   local n0 = n
   n = n or 1
@@ -218,6 +280,12 @@ function table:random(n)
   return n0 == nil and ret[1] or ret
 end
 
+--- 返回一个新的数组对象，这一对象是一个由`begin`和`_end`决定的原数组的浅拷贝（包括`begin`，不包括`_end`），其中`begin`和`_end`代表了数组元素的索引。
+---@generic T
+---@param self T[] @ 调用函数的数组
+---@param begin integer @ 提取起始处的索引（默认为`1`）；如果索引是负数，则从数组末尾开始计算；如果`begin >= _end`，则不提取任何元素
+---@param _end integer @ 提取终止处的索引（默认为`#self + 1`）；如果索引是负数，则从数组末尾开始计算；如果`_end <= begin`，则不提取任何元素
+---@return T[] @ 一个含有被提取元素的新数组
 function table:slice(begin, _end)
   local len = #self
   begin = begin or 1
@@ -283,7 +351,9 @@ function string:len()
   return utf8.len(self)
 end
 
----@param delimiter string
+--- 通过搜索给定的字符串将调用函数的字符串分割成一个有序的子串列表，将这些子串放入一个数组，并返回该数组。
+---@param self string @ 调用函数的字符串
+---@param delimiter string @ 描述每个分割应该发生在哪里的字符串
 ---@return string[]
 function string:split(delimiter)
   if #self == 0 then return {} end
@@ -299,10 +369,18 @@ function string:split(delimiter)
   return result
 end
 
+--- 判断字符串的开头是否为给定的字符串
+---@param self string @ 调用函数的字符串
+---@param start string @ 给定的字符串
+---@return boolean @ 如果字符串的开头是给定的字符串，则返回`true`，反之返回`false`
 function string:startsWith(start)
   return self:sub(1, #start) == start
 end
 
+--- 判断字符串的结尾是否为给定的字符串（字符串均可认定为以空结尾）
+---@param self string @ 调用函数的字符串
+---@param e string @ 给定的字符串
+---@return boolean @ 如果字符串的结尾是给定的字符串，则返回`true`，反之返回`false`
 function string:endsWith(e)
   return e == "" or self:sub(-#e) == e
 end
