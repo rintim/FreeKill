@@ -56,7 +56,7 @@ end
 ---@generic T
 ---@param self T[] @ 调用函数的数组，同时也是函数`func`中的第三个参数
 ---@param func fun(element: T, index: integer, array: T[]): boolean @ 为数组中的每个元素执行的函数
----@return boolean @ 如果测试函数为每个数组元素返回`true`，则为`true`，反之为`false`
+---@return boolean @ 如果测试函数对数组中至少一个元素返回一个`true`，则为`true`，反之为`false`
 function table:every(func)
   for i, v in ipairs(self) do
     if not func(v, i, self) then
@@ -64,6 +64,20 @@ function table:every(func)
     end
   end
   return true
+end
+
+--- 测试数组中是否至少有一个元素通过了由提供的函数实现的测试。
+---@generic T
+---@param self T[] @ 调用函数的数组，同时也是函数`func`中的第三个参数
+---@param func fun(element: T, index: integer, array: T[]): boolean @ 为数组中的每个元素执行的函数
+---@return boolean @ 如果测试函数为每个数组元素返回`true`，则为`true`，反之为`false`
+function table:some(func)
+  for i, v in ipairs(self) do
+    if func(v, i, self) then
+      return true
+    end
+  end
+  return false
 end
 
 --- 返回数组中满足提供的测试函数的第一个元素的值。
@@ -134,7 +148,7 @@ end
 ---@generic T
 ---@param self T[] @ 调用函数的数组
 ---@param element T @ 需要查找的值
----@return boolean @ 如果数组中包含给定的值，则返回`true`，反之返回`false`
+---@return boolean @ 如果数组中包含给定的值，则为`true`，反之为`false`
 function table:contains(element)
   if #self == 0 then return false end
   for _, e in ipairs(self) do
@@ -372,7 +386,7 @@ end
 --- 判断字符串的开头是否为给定的字符串
 ---@param self string @ 调用函数的字符串
 ---@param start string @ 给定的字符串
----@return boolean @ 如果字符串的开头是给定的字符串，则返回`true`，反之返回`false`
+---@return boolean @ 如果字符串的开头是给定的字符串，则为`true`，反之为`false`
 function string:startsWith(start)
   return self:sub(1, #start) == start
 end
@@ -380,7 +394,7 @@ end
 --- 判断字符串的结尾是否为给定的字符串（字符串均可认定为以空结尾）
 ---@param self string @ 调用函数的字符串
 ---@param e string @ 给定的字符串
----@return boolean @ 如果字符串的结尾是给定的字符串，则返回`true`，反之返回`false`
+---@return boolean @ 如果字符串的结尾是给定的字符串，则为`true`，反之为`false`
 function string:endsWith(e)
   return e == "" or self:sub(-#e) == e
 end
